@@ -68,6 +68,30 @@ def dist_W2_ind_ind(independent_gauss_0, independent_gauss_1):
     w2= delta_2_norm+torch.sum(mega_mat,dim=-1)
     return w2
 
+
+# Kl divergence  unique cases
+
+def kl_ind_mv(mvg0,indep0):
+    delta_mean =mvg0.mean-indep0.mean
+    indep_recip =torch.reciprocal(indep0.variance)
+    mahlab_term= torch.sum(torch.mul(torch.mul(delta_mean,indep_recip),delta_mean),dim=-1)
+
+    dimension = mvg0.event_shape[0]
+    logdet_gauss = torch.logdet(mvg0.covariance_matrix)
+    log_det_ind= torch.sum(torch.log(indep0.variance),dim=-1)
+    partial_term =log_det_ind-logdet_gauss-dimension
+    first_term =torch.sum(torch.diagonal(torch.mul(torch.unsqueeze(indep_recip,dim=-2),mvg0.covariance_matrix),dim1=-2,dim2=-1),dim=-1)
+    kl_score =0.5*(partial_term+mahlab_term + first_term)
+    return kl_score
+
+def kl_ind_standard(indG):
+    dimension = indG.event_shape[0]
+    delta_2_norm = torch.pow(torch.norm(indG.mean, dim=-1), 2)
+    log_det_ind = torch.sum(torch.log(indG.variance), dim=-1)
+    trace_term =torch.sum(indG.variance,dim=-1)
+    kl_score =0.5*(delta_2_norm+trace_term - log_det_ind-dimension)
+    return kl_score
+#
 if __name__ =='__main__':
    from torch.distributions import independent
    from torch.distributions import multivariate_normal,normal
